@@ -1,15 +1,18 @@
 
 #setwd("~/Documents/Documents/Projects/Anomaly")
 library(DT) 
+library(dplyr)
 library(proxy)
 library(dbscan)
 library(mlbench)
 library(randomForest)
-library(IsolationForest)
+#devtools::install_github("JSzitas/IsolationForests")
+library(solitude)
+library(rsample)
 library(autoencoder)
 library(fclust)
-library(DMwR)
-library(HighDimOut)
+#library(DMwR2)
+#library(HighDimOut)
 library(robustbase)
 library(SeleMix)
 #library(e1071)
@@ -150,13 +153,14 @@ shinyServer(function(input, output, session) {
           temp$outlier <- FALSE
           temp$outlier[outlier[1:outliercount]] <- TRUE }
     if (input$Model==7) {
-          tr<-IsolationTrees(selectedData$df[,1:2], rFactor=0)
-          as<-AnomalyScore(selectedData$df[,1:2],tr)
-          d <- as.data.frame(as$outF)
-          distance <- d[,1]
+          iso = isolationForest$new(sample_size=nrow(selectedData$df))
+          iso$fit(selectedData$df[,1:2])
+          distance <- selectedData$df[,1:2] %>% 
+            iso$predict() %>% 
+            select ("anomaly_score")
           temp <- cbind(selectedData$df,distance)
           temp$cluster <- 1
-          outlier <- order(temp$distance, decreasing=T)[1:outliercount]
+          outlier <- order(temp$anomaly_score, decreasing=T)[1:outliercount]
           temp$outlier <- FALSE
           temp$outlier[outlier[1:outliercount]] <- TRUE }
     if (input$Model==8) {
@@ -176,7 +180,7 @@ shinyServer(function(input, output, session) {
                                            unit.type=unit.type,lambda=lambda,beta=beta,rho=rho,epsilon=epsilon,
                                            optim.method="BFGS",max.iterations=max.iterations,
                                            rescale.flag=TRUE,rescaling.offset=0.001)
-          scores2 <- predict(autoencoder.object,X.input = traind)
+          scores2 <- predict(autoencoder.object,X.input = traind,hidden.output=FALSE)
           rajmse<-function(x_hat,x) rowMeans((x_hat-x)^2)
           score3 <- rajmse(selectedData$df[,1:2], scores2$X.output)
           d <- as.data.frame(score3)
@@ -239,24 +243,24 @@ shinyServer(function(input, output, session) {
       temp$outlier <- FALSE
       temp$outlier[outlier[1:outliercount]] <- TRUE 
     }
-    if (input$Model==14) {
-      results <- Func.FBOD(selectedData$df, iter=5, k.nn=input$clusters)
-      d<- as.data.frame (results)
-      distance <- d[,1]
-      temp <- cbind(selectedData$df,distance)
-      temp$cluster <- 1
-      outlier <- order(temp$distance, decreasing=T)[1:outliercount]
-      temp$outlier <- FALSE
-      temp$outlier[outlier[1:outliercount]] <- TRUE }
-    if (input$Model==15) {
-      results <- Func.SOD(data = selectedData$df, k.nn = input$clusters, k.sel = 5, alpha = 0.8)
-      d<- as.data.frame (results)
-      distance <- d[,1]
-      temp <- cbind(selectedData$df,distance)
-      temp$cluster <- 1
-      outlier <- order(temp$distance, decreasing=T)[1:outliercount]
-      temp$outlier <- FALSE
-      temp$outlier[outlier[1:outliercount]] <- TRUE }
+    # if (input$Model==14) {
+    #   results <- Func.FBOD(selectedData$df, iter=5, k.nn=input$clusters)
+    #   d<- as.data.frame (results)
+    #   distance <- d[,1]
+    #   temp <- cbind(selectedData$df,distance)
+    #   temp$cluster <- 1
+    #   outlier <- order(temp$distance, decreasing=T)[1:outliercount]
+    #   temp$outlier <- FALSE
+    #   temp$outlier[outlier[1:outliercount]] <- TRUE }
+    # if (input$Model==15) {
+    #   results <- Func.SOD(data = selectedData$df, k.nn = input$clusters, k.sel = 5, alpha = 0.8)
+    #   d<- as.data.frame (results)
+    #   distance <- d[,1]
+    #   temp <- cbind(selectedData$df,distance)
+    #   temp$cluster <- 1
+    #   outlier <- order(temp$distance, decreasing=T)[1:outliercount]
+    #   temp$outlier <- FALSE
+    #   temp$outlier[outlier[1:outliercount]] <- TRUE }
     if (input$Model==16) {
       svm.model<-svm(selectedData$df,y=NULL,type='one-classification',
                      nu=0.10,scale=TRUE,kernel="radial")

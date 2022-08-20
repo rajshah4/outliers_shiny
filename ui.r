@@ -1,9 +1,10 @@
 library(shinythemes)
 shinyUI(fluidPage(theme = shinytheme("spacelab"),
                   tags$head(includeScript("googleanalytics.js")),
-  navbarPage("2D Outlier Analysis",tabPanel("App",
+  navbarPage("2D Outlier / Anomaly Analysis",tabPanel("App",
   sidebarPanel(
-    selectInput('Model',label="Model",choices=list("Hierarchical Clustering"=12,
+    selectInput('Model',label="Model",choices=list(
+                                  # "Hierarchical Clustering"=12,
                                   "Mahalanobis Distance"=2,
                                   "EM - can be slow to converge"=17,
                                   "Kmeans Euclidean Distance" =1, 
@@ -13,7 +14,7 @@ shinyUI(fluidPage(theme = shinytheme("spacelab"),
                                   "Local Outlier Factor"=5,
                                  # "SVM"=16,
                                   "RandomForest"=6,"Isolation Forest"=7,
-                                  "FBOD"=14,"SOD"=15,
+                                  #"FBOD"=14,"SOD"=15,
                                   "Autoencoder"=8
                                   ),selected = 1),
     selectInput('sample',label="Sample",choices=list("Random" =1, 
